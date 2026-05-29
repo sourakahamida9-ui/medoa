@@ -1,53 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { MessageSquare, Flag, ThumbsUp, ChevronDown, ChevronUp, Shield } from "lucide-react";
+import { MessageSquare, Flag, ThumbsUp, ChevronDown, ChevronUp, Shield, Loader2 } from "lucide-react";
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
 
 interface CommentData {
   id: string;
-  author: string;
-  avatar: string;
   content: string;
   createdAt: string;
-  likes: number;
-  verified: boolean;
-  replies: CommentData[];
+  approved: boolean;
+  parentId: string | null;
+  users: User;
 }
 
-const sampleComments: CommentData[] = [
-  {
-    id: "c1",
-    author: "Abdoulaye Sarr",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=80&h=80&fit=crop",
-    content: "Excellent article, l'analyse des dynamiques régionales est particulièrement pertinente. Il serait intéressant d'approfondir le rôle des organisations de la société civile dans ces transformations.",
-    createdAt: "2026-05-13T14:30:00Z",
-    likes: 12,
-    verified: true,
-    replies: [
-      {
-        id: "c1r1",
-        author: "Fatou Mbaye",
-        avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=80&h=80&fit=crop",
-        content: "Tout à fait d'accord. La société civile joue un rôle de plus en plus déterminant dans ces processus de transformation.",
-        createdAt: "2026-05-13T16:45:00Z",
-        likes: 5,
-        verified: false,
-        replies: [],
-      },
-    ],
-  },
-  {
-    id: "c2",
-    author: "Marie Diop",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=80&h=80&fit=crop",
-    content: "Merci pour cette analyse approfondie. Les implications pour les populations sont souvent sous-estimées dans le traitement médiatique de ces sujets.",
-    createdAt: "2026-05-12T20:15:00Z",
-    likes: 8,
-    verified: false,
-    replies: [],
-  },
-];
+interface DisplayComment extends CommentData {
+  author: string;
+  avatar: string;
+  likes: number;
+  verified: boolean;
+  replies: DisplayComment[];
+}
 
 function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -63,7 +41,7 @@ function CommentItem({
   comment,
   depth = 0,
 }: {
-  comment: CommentData;
+  comment: DisplayComment;
   depth?: number;
 }) {
   const [showReplies, setShowReplies] = useState(depth === 0);
@@ -74,8 +52,14 @@ function CommentItem({
   return (
     <div className={depth > 0 ? "ml-8 mt-4 pl-4 border-l-2 border-[#DEDBD4] dark:border-[#2a2a3e]" : ""}>
       <div className="flex gap-3">
-        <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0">
-          <Image src={comment.avatar} alt={comment.author} fill className="object-cover" sizes="36px" />
+        <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 bg-[#DEDBD4] dark:bg-[#2a2a3e]">
+          {comment.avatar ? (
+            <Image src={comment.avatar} alt={comment.author} fill className="object-cover" sizes="36px" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#7A7A7A]">
+              {comment.author.charAt(0).toUpperCase()}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -161,11 +145,43 @@ function CommentItem({
   );
 }
 
-export function CommentSection({ articleSlug }: { articleSlug: string }) {
+export function CommentSection({ articleId, articleSlug }: { articleId?: string; articleSlug: string }) {
   const [newComment, setNewComment] = useState("");
   const [name, setName] = useState("");
-  const [comments] = useState<CommentData[]>(sampleComments);
+  const [comments, setComments] = useState<DisplayComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!articleId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/comments?articleId=${articleId}`);
+        if (!res.ok) throw new Error("Failed to load comments");
+        const data = await res.json();
+        const displayComments: DisplayComment[] = (data.comments || []).map((c: CommentData) => ({
+          ...c,
+          author: c.users.name,
+          avatar: c.users.avatar || "",
+          likes: 0,
+          verified: false,
+          replies: [],
+        }));
+        setComments(displayComments);
+      } catch (err) {
+        console.error("Error loading comments:", err);
+        setError(err instanceof Error ? err.message : "Failed to load comments");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchComments();
+  }, [articleId]);
 
   const sorted = [...comments].sort((a, b) => {
     if (sortBy === "popular") return b.likes - a.likes;
@@ -174,21 +190,35 @@ export function CommentSection({ articleSlug }: { articleSlug: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !name.trim()) return;
-    await fetch("/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ articleSlug, author: name, content: newComment }),
-    }).catch(() => {});
-    setNewComment("");
+    if (!newComment.trim() || !name.trim() || !articleId) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articleId, content: newComment }),
+      });
+      if (res.ok) {
+        setNewComment("");
+      }
+    } catch (err) {
+      console.error("Error posting comment:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (!articleId) {
+    return null;
+  }
 
   return (
     <div className="mt-12 pt-8 border-t border-[#DEDBD4] dark:border-[#2a2a3e]">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-serif text-xl font-bold text-[#0D1B2A] dark:text-white flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-[#C01D35]" />
-          Commentaires ({comments.length})
+          Commentaires ({loading ? "..." : comments.length})
         </h3>
         <div className="flex gap-1 text-xs">
           <button
@@ -235,18 +265,33 @@ export function CommentSection({ articleSlug }: { articleSlug: string }) {
           </p>
           <button
             type="submit"
-            className="bg-[#C01D35] text-white text-sm font-bold px-4 py-2 rounded hover:bg-[#A01728] transition-colors"
+            disabled={submitting}
+            className="bg-[#C01D35] text-white text-sm font-bold px-4 py-2 rounded hover:bg-[#A01728] transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            Publier
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publier"}
           </button>
         </div>
       </form>
 
-      <div className="space-y-6">
-        {sorted.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-[#C01D35]" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-sm text-red-600">
+          {error}
+        </div>
+      ) : comments.length === 0 ? (
+        <div className="text-center py-8 text-sm text-[#7A7A7A]">
+          Aucun commentaire pour le moment. Soyez le premier !
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {sorted.map((comment) => (
+            <CommentItem key={comment.id} comment={comment} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

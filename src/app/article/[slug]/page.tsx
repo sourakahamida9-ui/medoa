@@ -219,7 +219,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               </div>
             )}
 
-            <CommentSection articleSlug={article.slug} />
+            <CommentSection articleId={article.id} articleSlug={article.slug} />
 
             {/* Author bio */}
             <div className="mt-12 p-6 rounded-lg border border-[#DEDBD4] dark:border-[#2a2a3e] bg-[#F2F1EE] dark:bg-[#12121e]">

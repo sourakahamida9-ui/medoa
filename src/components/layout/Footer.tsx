@@ -1,10 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { navCategories } from "@/config/site";
+import { Loader2, CheckCircle2, X } from "lucide-react";
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: "Inscription réussie !" });
+        setEmail("");
+      } else {
+        setMessage({ type: "error", text: data.message || "Erreur lors de l'inscription" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Erreur de connexion" });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
   return (
     <footer className="bg-white dark:bg-[#1a1a2e] border-t border-[#DEDBD4] dark:border-[#2a2a3e] pt-20 pb-10" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -75,22 +107,31 @@ export function Footer() {
             <p className="text-sm text-[#4A4A4A] dark:text-[#a0a0b0] mb-4">
               Recevez chaque matin les informations essentielles.
             </p>
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => e.preventDefault()}
-            >
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2 mb-2">
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Votre email"
+                required
                 className="flex-1 text-sm px-3 py-2 border border-[#DEDBD4] dark:border-[#3a3a4e] rounded bg-transparent text-[#1A1A1A] dark:text-white outline-none focus:border-[#C01D35] transition-colors"
               />
               <button
                 type="submit"
-                className="bg-[#C01D35] text-white text-sm font-semibold px-4 py-2 rounded hover:bg-[#A01728] transition-colors"
+                disabled={loading}
+                className="bg-[#C01D35] text-white text-sm font-semibold px-4 py-2 rounded hover:bg-[#A01728] transition-colors disabled:opacity-50 flex items-center gap-1"
               >
-                OK
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "OK"}
               </button>
             </form>
+            {message && (
+              <div className={`text-xs px-2 py-1.5 rounded flex items-center gap-1.5 ${
+                message.type === "success" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+              }`}>
+                {message.type === "success" ? <CheckCircle2 className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                {message.text}
+              </div>
+            )}
           </div>
         </div>
 

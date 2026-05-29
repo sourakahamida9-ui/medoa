@@ -480,6 +480,13 @@ function ArticlesView({
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
+                    <Link
+                      href={`/admin/articles/${article.id}/edit`}
+                      className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#DEDBD4] dark:hover:bg-[#3a3a4e] transition-colors text-[#7A7A7A]"
+                      title="Éditer"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => onDelete(article.id)}
                       className="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-[#7A7A7A] hover:text-red-600"
