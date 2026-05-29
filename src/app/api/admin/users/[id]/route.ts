@@ -1,0 +1,16 @@
+import { NextResponse, NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    await prisma.user.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}

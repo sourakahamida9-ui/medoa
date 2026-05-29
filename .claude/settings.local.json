@@ -42,7 +42,9 @@
       "PowerShell(Get-Content *)",
       "Bash(curl -s https://npecvxutolauazkismej.supabase.co/rest/v1/ -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZWN2eHV0b2xhdWF6a2lzbWVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTEzNTYsImV4cCI6MjA5NDY2NzM1Nn0.JhAal11qtSszRn31peUepQkMVXPlaYuEx4hQevHsgY0\")",
       "Bash(curl *)",
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(vercel status *)",
+      "Bash(vercel deployments *)"
     ]
   }
 }

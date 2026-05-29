@@ -20,6 +20,8 @@ import {
   Loader2,
   RefreshCw,
   LogOut,
+  Layers,
+  Users,
 } from "lucide-react";
 
 import { Logo } from "@/components/layout/Logo";
@@ -107,6 +109,11 @@ export default function AdminDashboard() {
     { id: "breaking" as const, label: "Breaking News", icon: Zap },
   ];
 
+  const managementLinks = [
+    { href: "/admin/categories", label: "Catégories", icon: Layers },
+    { href: "/admin/authors", label: "Auteurs", icon: Users },
+  ];
+
   return (
     <div className="min-h-screen bg-[#F2F1EE] dark:bg-[#0f0f1a]">
       {/* Admin Header */}
@@ -168,6 +175,19 @@ export default function AdminDashboard() {
           </nav>
 
           <div className="mt-8 pt-4 border-t border-[#DEDBD4] dark:border-[#2a2a3e]">
+            <p className="text-xs font-semibold text-[#7A7A7A] uppercase tracking-wider px-3 mb-2">
+              Gestion
+            </p>
+            {managementLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#4A4A4A] dark:text-[#a0a0b0] hover:bg-[#F2F1EE] dark:hover:bg-[#2a2a3e] transition-all"
+              >
+                <link.icon className="w-4 h-4" />
+                {link.label}
+              </Link>
+            ))}
             <Link
               href="/admin/settings"
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#4A4A4A] dark:text-[#a0a0b0] hover:bg-[#F2F1EE] dark:hover:bg-[#2a2a3e] transition-all"
