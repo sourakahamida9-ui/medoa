@@ -44,7 +44,8 @@
       "Bash(curl *)",
       "Bash(git init *)",
       "Bash(vercel status *)",
-      "Bash(vercel deployments *)"
+      "Bash(vercel deployments *)",
+      "Bash(npm run *)"
     ]
   }
 }

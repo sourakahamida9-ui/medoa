@@ -18,7 +18,13 @@ export async function POST(req: NextRequest) {
 
     const slug = name.toLowerCase().replace(/\s+/g, "-");
     const category = await prisma.category.create({
-      data: { name, slug, color: color || "#C01D35", order: 0 },
+      data: {
+        name,
+        slug,
+        color: color || "#C01D35",
+        order: 0,
+        updatedAt: new Date(),
+      },
     });
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
