@@ -27,7 +27,7 @@ export default function AuthorsPage() {
 
   // Fetch authors
   useEffect(() => {
-    async function fetch() {
+    async function loadAuthors() {
       try {
         const res = await fetch("/api/admin/users");
         if (res.ok) {
@@ -40,7 +40,7 @@ export default function AuthorsPage() {
         setLoading(false);
       }
     }
-    fetch();
+    loadAuthors();
   }, []);
 
   const showToast = (type: "success" | "error", message: string) => {

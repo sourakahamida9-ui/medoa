@@ -29,7 +29,7 @@ export default function CategoriesPage() {
 
   // Fetch categories
   useEffect(() => {
-    async function fetch() {
+    async function loadCategories() {
       try {
         const res = await fetch("/api/admin/categories");
         if (res.ok) {
@@ -42,7 +42,7 @@ export default function CategoriesPage() {
         setLoading(false);
       }
     }
-    fetch();
+    loadCategories();
   }, []);
 
   const showToast = (type: "success" | "error", message: string) => {
