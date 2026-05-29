@@ -27,9 +27,8 @@ export async function POST(req: NextRequest) {
         role: role?.toUpperCase() || "AUTHOR",
         avatar: avatar || null,
       },
-      select: { id: true, name: true, email: true, avatar: true, role: true },
     });
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 400 });
@@ -49,9 +48,8 @@ export async function PUT(req: NextRequest) {
         ...(role && { role: role.toUpperCase() }),
         ...(avatar !== undefined && { avatar }),
       },
-      select: { id: true, name: true, email: true, avatar: true, role: true },
     });
-    return NextResponse.json(user);
+    return NextResponse.json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 400 });
