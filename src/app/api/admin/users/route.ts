@@ -20,12 +20,14 @@ export async function POST(req: NextRequest) {
     const { name, email, role, avatar } = await req.json();
     if (!name || !email) throw new Error("Name and email are required");
 
+    const now = new Date();
     const user = await prisma.user.create({
       data: {
         name,
         email,
         role: role?.toUpperCase() || "AUTHOR",
         avatar: avatar || null,
+        updatedAt: now,
       },
     });
     return NextResponse.json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role }, { status: 201 });
@@ -47,6 +49,7 @@ export async function PUT(req: NextRequest) {
         ...(email && { email }),
         ...(role && { role: role.toUpperCase() }),
         ...(avatar !== undefined && { avatar }),
+        updatedAt: new Date(),
       },
     });
     return NextResponse.json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role });
