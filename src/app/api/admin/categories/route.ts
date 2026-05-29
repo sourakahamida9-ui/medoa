@@ -17,13 +17,15 @@ export async function POST(req: NextRequest) {
     if (!name) throw new Error("Name is required");
 
     const slug = name.toLowerCase().replace(/\s+/g, "-");
+    const now = new Date();
     const category = await prisma.category.create({
       data: {
         name,
         slug,
         color: color || "#C01D35",
         order: 0,
-        updatedAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
       },
     });
     return NextResponse.json(category, { status: 201 });
@@ -41,7 +43,12 @@ export async function PUT(req: NextRequest) {
     const slug = name.toLowerCase().replace(/\s+/g, "-");
     const category = await prisma.category.update({
       where: { id },
-      data: { name, slug, color: color || "#C01D35" },
+      data: {
+        name,
+        slug,
+        color: color || "#C01D35",
+        updatedAt: new Date(),
+      },
     });
     return NextResponse.json(category);
   } catch (error) {
