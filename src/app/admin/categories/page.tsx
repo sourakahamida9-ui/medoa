@@ -168,12 +168,11 @@ export default function CategoriesPage() {
                     key={color}
                     type="button"
                     onClick={() => setFormData({...formData, color})}
-                    className={`w-full h-10 rounded-lg transition-all ${
-                      formData.color === color ? "ring-2 ring-offset-2" : ""
+                    className={`w-full h-10 rounded-lg transition-all border-2 ${
+                      formData.color === color ? "border-[#0D1B2A] dark:border-white" : "border-transparent"
                     }`}
                     style={{
-                      backgroundColor: color,
-                      ringColor: color
+                      backgroundColor: color
                     }}
                   />
                 ))}
