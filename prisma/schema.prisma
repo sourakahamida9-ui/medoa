@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  name          String?
+  avatar        String?
+  bio           String?
+  role          UserRole        @default(READER)
+  emailVerified DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  accounts      accounts[]
+  articles      Article[]
+  bookmarks     bookmarks[]
+  comments      Comment[]
+  notifications notifications[]
+  sessions      sessions[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  color       String    @default("#C01D35")
+  icon        String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  articles    Article[]
+
+  @@map("categories")
+}
+
+model Article {
+  id                   String                 @id @default(uuid())
+  slug                 String                 @unique
+  title                String
+  subtitle             String?
+  excerpt              String
+  body                 String
+  image                String?
+  imageCaption         String?
+  status               ArticleStatus          @default(DRAFT)
+  featured             Boolean                @default(false)
+  breaking             Boolean                @default(false)
+  readTime             Int                    @default(0)
+  views                Int                    @default(0)
+  locale               String                 @default("fr")
+  publishedAt          DateTime?
+  scheduledAt          DateTime?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  authorId             String
+  categoryId           String
+  article_analytics    article_analytics[]
+  article_tags         ArticleTag[]
+  article_translations article_translations[]
+  article_versions     article_versions[]
+  users                User                   @relation(fields: [authorId], references: [id])
+  categories           Category               @relation(fields: [categoryId], references: [id])
+  bookmarks            bookmarks[]
+  comments             Comment[]
+  media                media[]
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([status, publishedAt])
+  @@map("articles")
+}
+
+model Tag {
+  id           String       @id @default(uuid())
+  name         String       @unique
+  slug         String       @unique
+  createdAt    DateTime     @default(now())
+  article_tags ArticleTag[]
+
+  @@map("tags")
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  articles  Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tags      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@map("article_tags")
+}
+
+model Comment {
+  id             String    @id @default(uuid())
+  content        String
+  approved       Boolean   @default(false)
+  flagged        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  articleId      String
+  authorId       String
+  parentId       String?
+  articles       Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  users          User      @relation(fields: [authorId], references: [id])
+  comments       Comment?  @relation("commentsTocomments", fields: [parentId], references: [id])
+  other_comments Comment[] @relation("commentsTocomments")
+
+  @@index([articleId])
+  @@map("comments")
+}
+
+model accounts {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  users             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model ads {
+  id        String    @id
+  name      String
+  type      String
+  content   String
+  position  String
+  active    Boolean   @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+  clicks    Int       @default(0)
+  views     Int       @default(0)
+  createdAt DateTime  @default(now())
+}
+
+model article_analytics {
+  id          String   @id
+  articleId   String
+  date        DateTime @db.Date
+  views       Int      @default(0)
+  uniqueViews Int      @default(0)
+  readTime    Float    @default(0)
+  shares      Int      @default(0)
+  articles    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, date])
+}
+
+model article_translations {
+  id        String   @id
+  articleId String
+  locale    String
+  title     String
+  subtitle  String?
+  excerpt   String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  articles  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, locale])
+}
+
+model article_versions {
+  id        String   @id
+  articleId String
+  title     String
+  body      String
+  version   Int
+  createdAt DateTime @default(now())
+  articles  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model bookmarks {
+  id        String   @id @default(uuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  articles  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  users     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model media {
+  id        String    @id @default(uuid())
+  url       String
+  type      MediaType
+  alt       String?
+  caption   String?
+  width     Int?
+  height    Int?
+  size      Int?
+  mimeType  String?
+  createdAt DateTime  @default(now())
+  articleId String?
+  articles  Article?  @relation(fields: [articleId], references: [id])
+}
+
+model notifications {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+  users     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model sessions {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  users        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model settings {
+  id    String @id
+  key   String @unique
+  value String
+}
+
+enum UserRole {
+  READER
+  AUTHOR
+  EDITOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ArticleStatus {
+  DRAFT
+  REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum NotificationType {
+  COMMENT
+  ARTICLE
+  SYSTEM
+  MENTION
+}
